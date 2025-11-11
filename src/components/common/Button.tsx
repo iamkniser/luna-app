@@ -1,11 +1,12 @@
 import { ReactElement } from "react";
-import { Pressable, StyleSheet, Text, ViewStyle } from "react-native";
+import { Pressable, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import { colors } from "@/src/constants/colors";
 import { typography } from "@/src/constants/typography";
 
 interface ButtonProps {
   title: string;
+  icon?: React.ReactNode;
   onPress: () => void;
   variant?: "primary" | "secondary";
   fullWidth?: boolean;
@@ -24,6 +25,7 @@ const SHADOW_ANDROID: ViewStyle = {
 
 const Button = ({
   title,
+  icon,
   onPress,
   variant = "primary",
   fullWidth = true,
@@ -39,7 +41,18 @@ const Button = ({
         pressed && styles.pressed,
       ]}
     >
-      <Text style={[typography.body, styles.label]}>{title}</Text>
+      <View style={styles.content}>
+        {icon && <View style={styles.iconWrapper}>{icon}</View>}
+        <Text
+          style={[
+            typography.body,
+            styles.label,
+            variant === "secondary" && styles.secondaryLabel,
+          ]}
+        >
+          {title}
+        </Text>
+      </View>
     </Pressable>
   );
 };
@@ -69,6 +82,18 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: "700",
     letterSpacing: 0.2,
+  },
+  secondaryLabel: {
+    color: colors.primary,
+  },
+  content: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  iconWrapper: {
+    marginLeft: 4,
   },
   pressed: {
     opacity: 0.8,

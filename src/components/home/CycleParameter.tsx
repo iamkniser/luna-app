@@ -1,0 +1,39 @@
+import { memo } from "react";
+import { StyleSheet, Text, View } from "react-native";
+
+import { colors } from "@/src/constants/colors";
+import { typography } from "@/src/constants/typography";
+
+interface CycleParameterProps {
+  label: string;
+  value: string;
+}
+
+const CycleParameterComponent = ({ label, value }: CycleParameterProps) => {
+  return (
+    <View style={styles.row}>
+      <Text style={[typography.body, styles.label]}>{label}</Text>
+      <Text style={[typography.body, styles.value]}>{value}</Text>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  label: {
+    color: colors.text.light,
+  },
+  value: {
+    color: colors.text.dark,
+    fontWeight: "700",
+  },
+});
+
+export const CycleParameter = memo(CycleParameterComponent);
