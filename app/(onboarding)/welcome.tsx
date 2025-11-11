@@ -11,8 +11,8 @@ import { typography } from "@/src/constants/typography";
 
 const WelcomeScreen = (): ReactElement => {
   const handleStart = () => {
-    console.log("Navigate to main flow");
-    router.push("/");
+    console.log("Navigate to onboarding setup");
+    router.push("/(onboarding)/setup");
   };
 
   return (
