@@ -93,8 +93,8 @@ const SetupScreen = (): ReactElement => {
       lastPeriodDate: lastPeriodDate.toISOString(),
       averageCycleLength: cycleLength || DEFAULT_CYCLE,
     };
-
     completeOnboarding(onboardingData);
+
     setTimeout(() => {
       setIsSaving(false);
       router.replace("/(tabs)");

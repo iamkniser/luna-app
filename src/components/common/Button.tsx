@@ -8,8 +8,9 @@ interface ButtonProps {
   title: string;
   icon?: React.ReactNode;
   onPress: () => void;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "danger";
   fullWidth?: boolean;
+  disabled?: boolean;
 }
 
 const SHADOW_IOS: ViewStyle = {
@@ -29,27 +30,38 @@ const Button = ({
   onPress,
   variant = "primary",
   fullWidth = true,
+  disabled = false,
 }: ButtonProps): ReactElement => {
+  const buttonVariantStyle =
+    variant === "secondary"
+      ? styles.secondary
+      : variant === "danger"
+      ? styles.danger
+      : styles.primary;
+
+  const labelVariantStyle =
+    variant === "secondary"
+      ? styles.secondaryLabel
+      : variant === "danger"
+      ? styles.dangerLabel
+      : styles.primaryLabel;
+
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
+      disabled={disabled}
       style={({ pressed }) => [
         styles.button,
         fullWidth && styles.fullWidth,
-        variant === "primary" ? styles.primary : styles.secondary,
+        buttonVariantStyle,
+        disabled && styles.disabled,
         pressed && styles.pressed,
       ]}
     >
       <View style={styles.content}>
         {icon && <View style={styles.iconWrapper}>{icon}</View>}
-        <Text
-          style={[
-            typography.body,
-            styles.label,
-            variant === "secondary" && styles.secondaryLabel,
-          ]}
-        >
+        <Text style={[typography.body, styles.labelBase, labelVariantStyle]}>
           {title}
         </Text>
       </View>
@@ -78,13 +90,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.primary,
   },
-  label: {
-    color: colors.white,
+  danger: {
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.danger,
+  },
+  labelBase: {
     fontWeight: "700",
     letterSpacing: 0.2,
   },
+  primaryLabel: {
+    color: colors.white,
+  },
   secondaryLabel: {
     color: colors.primary,
+  },
+  dangerLabel: {
+    color: colors.danger,
   },
   content: {
     flexDirection: "row",
@@ -94,6 +116,9 @@ const styles = StyleSheet.create({
   },
   iconWrapper: {
     marginLeft: 4,
+  },
+  disabled: {
+    opacity: 0.6,
   },
   pressed: {
     opacity: 0.8,

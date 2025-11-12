@@ -15,6 +15,7 @@ export const colors = {
   },
 
   surfaceMuted: "#E5E7EB",
+  danger: "#EF4444",
 
   shadow: "rgba(0, 0, 0, 0.08)",
 } as const;

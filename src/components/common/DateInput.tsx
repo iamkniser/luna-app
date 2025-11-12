@@ -21,6 +21,7 @@ interface DateInputProps {
   label: string;
   value: Date;
   onChange: (date: Date) => void;
+  variant?: "filled" | "subtle";
 }
 
 const pickerStyle: ViewStyle =
@@ -35,6 +36,7 @@ const DateInput = ({
   label,
   value,
   onChange,
+  variant = "filled",
 }: DateInputProps): ReactElement => {
   const [showPicker, setShowPicker] = useState(false);
 
@@ -50,13 +52,24 @@ const DateInput = ({
 
   const formatted = format(value, "dd.MM.yyyy", { locale: ru });
 
+  const variantStyle =
+    variant === "subtle" ? styles.inputSubtle : styles.inputFilled;
+  const variantPressedStyle =
+    variant === "subtle"
+      ? styles.inputSubtlePressed
+      : styles.inputFilledPressed;
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       <Pressable
         accessibilityRole="button"
         onPress={() => setShowPicker(true)}
-        style={({ pressed }) => [styles.input, pressed && styles.pressed]}
+        style={({ pressed }) => [
+          styles.inputBase,
+          variantStyle,
+          pressed && [styles.pressedBase, variantPressedStyle],
+        ]}
       >
         <Text style={styles.value}>{formatted}</Text>
       </Pressable>
@@ -101,20 +114,34 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.text.secondary,
   },
-  input: {
-    backgroundColor: colors.white,
+  inputBase: {
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 16,
     justifyContent: "center",
+  },
+  inputFilled: {
+    backgroundColor: colors.white,
     elevation: 2,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
   },
-  pressed: {
+  inputSubtle: {
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  pressedBase: {
     opacity: 0.9,
+  },
+  inputFilledPressed: {
+    elevation: 4,
+    shadowOpacity: 0.3,
+  },
+  inputSubtlePressed: {
+    borderColor: colors.primary,
   },
   value: {
     fontSize: 16,

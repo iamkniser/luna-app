@@ -17,6 +17,7 @@ interface InputProps {
   placeholder?: string;
   keyboardType?: TextInputProps["keyboardType"];
   required?: boolean;
+  variant?: "filled" | "subtle";
 }
 
 const Input = ({
@@ -26,8 +27,16 @@ const Input = ({
   placeholder,
   keyboardType = "default",
   required = false,
+  variant = "filled",
 }: InputProps): ReactElement => {
   const [isFocused, setIsFocused] = useState(false);
+
+  const variantStyle =
+    variant === "subtle" ? styles.inputSubtle : styles.inputFilled;
+  const variantFocusedStyle =
+    variant === "subtle"
+      ? styles.inputSubtleFocused
+      : styles.inputFilledFocused;
 
   return (
     <View style={styles.container}>
@@ -41,7 +50,11 @@ const Input = ({
         placeholder={placeholder}
         placeholderTextColor={colors.text.light}
         keyboardType={keyboardType}
-        style={[styles.input, isFocused && styles.inputFocused]}
+        style={[
+          styles.inputBase,
+          variantStyle,
+          isFocused && [styles.inputFocusedBase, variantFocusedStyle],
+        ]}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
       />
@@ -57,24 +70,36 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.text.secondary,
   },
-  input: {
-    backgroundColor: colors.white,
+  inputBase: {
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 16,
     fontSize: 16,
     color: colors.text.primary,
+  },
+  inputFilled: {
+    backgroundColor: colors.white,
     elevation: 2,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
   },
-  inputFocused: {
+  inputSubtle: {
+    backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
+    borderColor: colors.border,
+  },
+  inputFocusedBase: {
+    borderWidth: 1,
+  },
+  inputFilledFocused: {
     borderColor: colors.primary,
     elevation: 4,
     shadowOpacity: 0.3,
+  },
+  inputSubtleFocused: {
+    borderColor: colors.primary,
   },
 });
 
