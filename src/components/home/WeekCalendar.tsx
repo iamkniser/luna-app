@@ -13,20 +13,13 @@ import {
 import { colors } from "@/src/constants/colors";
 import { typography } from "@/src/constants/typography";
 import { useCycleStore } from "@/src/store/cycleStore";
+import { MOOD_EMOJIS } from "@/src/types/cycle";
 import { getWeekDays, toISODate } from "@/src/utils/dateHelpers";
 
 interface WeekCalendarProps {
   currentDate: Date;
   onDayPress?: (date: Date) => void;
 }
-
-const moodEmojiMap: Record<string, string> = {
-  great: "😄",
-  good: "🙂",
-  okay: "😐",
-  bad: "🙁",
-  awful: "😣",
-};
 
 const WeekCalendarComponent = ({
   currentDate,
@@ -45,7 +38,7 @@ const WeekCalendarComponent = ({
       {weekDays.map((day) => {
         const isToday = isSameDay(day, currentDate);
         const log = getDailyLog(toISODate(day));
-        const moodEmoji = log?.mood ? moodEmojiMap[log.mood] : undefined;
+        const moodEmoji = log?.mood ? MOOD_EMOJIS[log.mood] : undefined;
 
         return (
           <TouchableOpacity

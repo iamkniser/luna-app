@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { DayDetailsDrawer } from "@/src/components/calendar/DayDetailsDrawer";
 import Button from "@/src/components/common/Button";
 import { CycleParameter } from "@/src/components/home/CycleParameter";
 import { CycleProgressBar } from "@/src/components/home/CycleProgressBar";
@@ -19,11 +21,20 @@ export default function HomeScreen() {
   const user = useUserStore((state) => state.user);
   const cycles = useCycleStore((state) => state.cycles);
   const [currentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const cycleStatus = useMemo(() => {
     if (!user) return null;
     return calculateCycleStatus(user, cycles, currentDate);
   }, [user, cycles, currentDate]);
+
+  const handleDayPress = (date: Date) => {
+    setSelectedDate(date);
+  };
+
+  const handleCloseDrawer = () => {
+    setSelectedDate(null);
+  };
 
   if (!user) {
     return (
@@ -34,75 +45,87 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Text style={[typography.h2, styles.greeting]}>
-            Привет{user.name ? `, ${user.name}` : ""}! 👋
-          </Text>
-          <Text style={[typography.caption, styles.date]}>
-            {formatDate(currentDate, "d MMMM yyyy")}
-          </Text>
-        </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <Text style={[typography.h2, styles.greeting]}>
+              Привет{user.name ? `, ${user.name}` : ""}! 👋
+            </Text>
+            <Text style={[typography.caption, styles.date]}>
+              {formatDate(currentDate, "d MMMM yyyy")}
+            </Text>
+          </View>
 
-        <View style={styles.section}>
-          <Text style={[typography.h4, styles.sectionTitle]}>
-            Текущая неделя
-          </Text>
-          <WeekCalendar currentDate={currentDate} />
-          <CycleProgressBar
-            currentDay={cycleStatus?.currentDay ?? 1}
-            totalDays={user.averageCycleLength}
-          />
-        </View>
-
-        {cycleStatus && (
           <View style={styles.section}>
-            <StatusCard cycleStatus={cycleStatus} />
-          </View>
-        )}
-
-        <View style={styles.section}>
-          <Button
-            title="Открыть календарь"
-            icon={<Ionicons name="calendar" size={24} color={colors.primary} />}
-            onPress={() => {
-              console.log("Open calendar");
-            }}
-            variant="secondary"
-            fullWidth
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[typography.h4, styles.sectionTitle]}>
-            Параметры цикла
-          </Text>
-          <View style={styles.parametersContainer}>
-            <CycleParameter
-              label="Средняя длина"
-              value={`${user.averageCycleLength} дней`}
+            <Text style={[typography.h4, styles.sectionTitle]}>
+              Текущая неделя
+            </Text>
+            <WeekCalendar
+              currentDate={currentDate}
+              onDayPress={handleDayPress}
             />
-            {user.lastPeriodDate && (
-              <CycleParameter
-                label="Начало последней менструации"
-                value={formatDateShort(user.lastPeriodDate)}
-              />
-            )}
-            {cycleStatus?.daysUntilNextPeriod !== undefined && (
-              <CycleParameter
-                label="До следующей менструации"
-                value={`${cycleStatus.daysUntilNextPeriod} дней`}
-              />
-            )}
+            <CycleProgressBar
+              currentDay={cycleStatus?.currentDay ?? 1}
+              totalDays={user.averageCycleLength}
+            />
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+
+          {cycleStatus && (
+            <View style={styles.section}>
+              <StatusCard cycleStatus={cycleStatus} />
+            </View>
+          )}
+
+          <View style={styles.section}>
+            <Button
+              title="Открыть календарь"
+              icon={
+                <Ionicons name="calendar" size={24} color={colors.primary} />
+              }
+              onPress={() => {
+                console.log("Open calendar");
+              }}
+              variant="secondary"
+              fullWidth
+            />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[typography.h4, styles.sectionTitle]}>
+              Параметры цикла
+            </Text>
+            <View style={styles.parametersContainer}>
+              <CycleParameter
+                label="Средняя длина"
+                value={`${user.averageCycleLength} дней`}
+              />
+              {user.lastPeriodDate && (
+                <CycleParameter
+                  label="Начало последней менструации"
+                  value={formatDateShort(user.lastPeriodDate)}
+                />
+              )}
+              {cycleStatus?.daysUntilNextPeriod !== undefined && (
+                <CycleParameter
+                  label="До следующей менструации"
+                  value={`${cycleStatus.daysUntilNextPeriod} дней`}
+                />
+              )}
+            </View>
+          </View>
+        </ScrollView>
+
+        <DayDetailsDrawer
+          selectedDate={selectedDate}
+          onClose={handleCloseDrawer}
+        />
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 

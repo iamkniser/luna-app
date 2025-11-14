@@ -9,8 +9,9 @@ interface CycleStore {
   addCycle: (cycle: Cycle) => void;
   updateCycle: (id: string, data: Partial<Cycle>) => void;
   addDailyLog: (log: DailyLog) => void;
-  updateDailyLog: (id: string, data: Partial<DailyLog>) => void;
+  updateDailyLog: (date: string, data: Partial<DailyLog>) => void;
   getDailyLog: (date: string) => DailyLog | undefined;
+  deleteDailyLog: (date: string) => void;
 }
 
 export const useCycleStore = create<CycleStore>()(
@@ -42,16 +43,39 @@ export const useCycleStore = create<CycleStore>()(
         }));
       },
 
-      updateDailyLog: (id: string, data: Partial<DailyLog>) => {
-        set((state) => ({
-          dailyLogs: state.dailyLogs.map((log) =>
-            log.id === id ? { ...log, ...data } : log
-          ),
-        }));
+      updateDailyLog: (date: string, data: Partial<DailyLog>) => {
+        set((state) => {
+          const existingLog = state.dailyLogs.find((log) => log.date === date);
+
+          if (existingLog) {
+            return {
+              dailyLogs: state.dailyLogs.map((log) =>
+                log.date === date ? { ...log, ...data } : log
+              ),
+            };
+          }
+
+          const newLog: DailyLog = {
+            id: Date.now().toString(),
+            date,
+            isPeriodDay: false,
+            ...data,
+          };
+
+          return {
+            dailyLogs: [...state.dailyLogs, newLog],
+          };
+        });
       },
 
       getDailyLog: (date: string) => {
         return get().dailyLogs.find((log) => log.date === date);
+      },
+
+      deleteDailyLog: (date: string) => {
+        set((state) => ({
+          dailyLogs: state.dailyLogs.filter((log) => log.date !== date),
+        }));
       },
     }),
     {
