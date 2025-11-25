@@ -161,7 +161,14 @@ export const DayDetailsDrawer: React.FC<DayDetailsDrawerProps> = ({
               )}
             </View>
 
-            <MoodSelector selectedMood={mood} onSelectMood={setMood} />
+            <MoodSelector
+              selectedMood={mood}
+              onSelectMood={(selectedMood) =>
+                setMood((prev) =>
+                  prev === selectedMood ? undefined : selectedMood
+                )
+              }
+            />
 
             <View style={styles.section}>
               <Text style={styles.label}>Заметка</Text>

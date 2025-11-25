@@ -7,7 +7,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { colors } from "@/src/constants/colors";
 import { typography } from "@/src/constants/typography";
 import { useCycleStore } from "@/src/store/cycleStore";
-import { MOOD_EMOJIS } from "@/src/types/cycle";
+import { DailyLog, MOOD_EMOJIS } from "@/src/types/cycle";
 import { getWeekDays, toISODate } from "@/src/utils/dateHelpers";
 
 interface WeekCalendarProps {
@@ -19,7 +19,15 @@ const WeekCalendarComponent = ({
   currentDate,
   onDayPress,
 }: WeekCalendarProps) => {
-  const getDailyLog = useCycleStore((state) => state.getDailyLog);
+  const dailyLogs = useCycleStore((state) => state.dailyLogs);
+
+  const logsByDate = useMemo(() => {
+    const map: Record<string, DailyLog> = {};
+    dailyLogs.forEach((log) => {
+      map[log.date] = log;
+    });
+    return map;
+  }, [dailyLogs]);
 
   const weekDays = useMemo(() => getWeekDays(currentDate), [currentDate]);
 
@@ -28,7 +36,7 @@ const WeekCalendarComponent = ({
       {weekDays.map((day) => {
         const isToday = isSameDay(day, currentDate);
         const dateStr = toISODate(day);
-        const log = getDailyLog(dateStr);
+        const log = logsByDate[dateStr];
         const moodEmoji = log?.mood ? MOOD_EMOJIS[log.mood] : undefined;
 
         return (
