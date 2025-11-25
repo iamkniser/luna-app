@@ -2,13 +2,7 @@ import { format } from "date-fns";
 import { isSameDay } from "date-fns/isSameDay";
 import { ru } from "date-fns/locale";
 import { memo, useMemo } from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { colors } from "@/src/constants/colors";
 import { typography } from "@/src/constants/typography";
@@ -30,11 +24,7 @@ const WeekCalendarComponent = ({
   const weekDays = useMemo(() => getWeekDays(currentDate), [currentDate]);
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.listContent}
-    >
+    <View style={styles.weekRow}>
       {weekDays.map((day) => {
         const isToday = isSameDay(day, currentDate);
         const dateStr = toISODate(day);
@@ -44,56 +34,72 @@ const WeekCalendarComponent = ({
         return (
           <TouchableOpacity
             key={dateStr}
-            style={[
-              styles.card,
-              isToday ? styles.cardCurrent : styles.cardDefault,
-            ]}
+            style={styles.dayContainer}
             activeOpacity={0.8}
             onPress={() => onDayPress?.(day)}
           >
-            <View>
-              <Text
+            <Text
+              style={[
+                typography.caption,
+                styles.dayLabel,
+                isToday && styles.dayLabelCurrent,
+              ]}
+            >
+              {format(day, "EE", { locale: ru }).slice(0, 2).toUpperCase()}
+            </Text>
+            <View style={styles.circleWrapper}>
+              <View
                 style={[
-                  typography.caption,
-                  styles.dayLabel,
-                  isToday && styles.dayLabelCurrent,
+                  styles.dayCircle,
+                  isToday ? styles.dayCircleCurrent : styles.dayCircleDefault,
                 ]}
               >
-                {format(day, "EEE", { locale: ru }).slice(0, 3).toUpperCase()}
-              </Text>
-              <Text
-                style={[
-                  typography.h4,
-                  styles.dayNumber,
-                  isToday && styles.dayNumberCurrent,
-                ]}
-              >
-                {format(day, "d")}
-              </Text>
-              {moodEmoji && <Text style={styles.mood}>{moodEmoji}</Text>}
+                <Text
+                  style={[styles.dayNumber, isToday && styles.dayNumberCurrent]}
+                >
+                  {format(day, "d")}
+                </Text>
+              </View>
+              {moodEmoji && (
+                <View style={styles.moodEmojiWrapper}>
+                  <Text style={styles.mood}>{moodEmoji}</Text>
+                </View>
+              )}
             </View>
           </TouchableOpacity>
         );
       })}
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  listContent: {
-    gap: 12,
+  weekRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 8,
   },
-  card: {
-    width: 60,
-    height: 80,
-    borderRadius: 20,
+  dayContainer: {
+    flex: 1,
+    alignItems: "center",
+    gap: 6,
+  },
+  circleWrapper: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dayCircle: {
+    width: 46,
+    height: 52,
+    borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
   },
-  cardCurrent: {
+  dayCircleCurrent: {
     backgroundColor: colors.primary,
   },
-  cardDefault: {
+  dayCircleDefault: {
     backgroundColor: "#FFF0F5",
   },
   dayLabel: {
@@ -102,7 +108,7 @@ const styles = StyleSheet.create({
     color: colors.text.light,
   },
   dayLabelCurrent: {
-    color: colors.white,
+    color: colors.text.dark,
   },
   dayNumber: {
     fontSize: 24,
@@ -114,7 +120,11 @@ const styles = StyleSheet.create({
   },
   mood: {
     fontSize: 20,
-    marginTop: 4,
+  },
+  moodEmojiWrapper: {
+    position: "absolute",
+    bottom: -6,
+    alignItems: "center",
   },
 });
 
