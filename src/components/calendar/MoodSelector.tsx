@@ -1,26 +1,61 @@
+import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
+
 import { colors } from "@/src/constants/colors";
 import { DailyLog } from "@/src/types/cycle";
-import { Pressable, StyleSheet, Text, View } from "react-native";
 
 interface MoodSelectorProps {
   selectedMood?: DailyLog["mood"];
   onSelectMood: (mood: DailyLog["mood"]) => void;
 }
 
-const MOODS: Array<{ value: DailyLog["mood"]; emoji: string }> = [
-  { value: "great", emoji: "🥰" },
-  { value: "good", emoji: "😊" },
-  { value: "okay", emoji: "😐" },
-  { value: "bad", emoji: "😢" },
-  { value: "awful", emoji: "😭" },
+const MOODS: {
+  value: DailyLog["mood"];
+  emoji: string;
+  label: string;
+}[] = [
+  { value: "good", emoji: "🙂", label: "Хорошо" },
+  { value: "neutral", emoji: "😐", label: "Нейтрально" },
+  { value: "bad", emoji: "😣", label: "Плохо" },
+  { value: "irritated", emoji: "😤", label: "Раздражение" },
+  { value: "tired", emoji: "🥱", label: "Усталость" },
+  { value: "libido_high", emoji: "🔥", label: "Либидо ↑" },
 ];
 
-const ADDITIONAL_MOODS: Array<{ value: DailyLog["mood"]; emoji: string }> = [
-  { value: "love", emoji: "😍" },
-  { value: "happy", emoji: "😄" },
-  { value: "sad", emoji: "😭" },
-  { value: "sick", emoji: "🤒" },
-];
+const COLUMNS = 4;
+const GAP = 8;
+const CONTAINER_PADDING = 20; // padding контейнера DayDetailsDrawer
+const screenWidth = Dimensions.get("window").width;
+const itemWidth =
+  (screenWidth - CONTAINER_PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS;
+
+interface MoodButtonProps {
+  mood: (typeof MOODS)[0];
+  isSelected: boolean;
+  onPress: () => void;
+}
+
+const MoodButton: React.FC<MoodButtonProps> = ({
+  mood,
+  isSelected,
+  onPress,
+}) => {
+  return (
+    <Pressable onPress={onPress} style={styles.moodButtonContainer}>
+      <View
+        style={[styles.moodButton, isSelected && styles.moodButtonSelected]}
+      >
+        <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+        <Text
+          style={[styles.moodLabel, isSelected && styles.moodLabelSelected]}
+          numberOfLines={1}
+          adjustsFontSizeToFit={true}
+        >
+          {mood.label}
+        </Text>
+      </View>
+    </Pressable>
+  );
+};
 
 export const MoodSelector: React.FC<MoodSelectorProps> = ({
   selectedMood,
@@ -30,33 +65,14 @@ export const MoodSelector: React.FC<MoodSelectorProps> = ({
     <View style={styles.container}>
       <Text style={styles.label}>Как настроение?</Text>
 
-      <View style={styles.moodRow}>
+      <View style={styles.moodGrid}>
         {MOODS.map((mood) => (
-          <Pressable
+          <MoodButton
             key={mood.value}
-            style={[
-              styles.moodButton,
-              selectedMood === mood.value && styles.moodButtonSelected,
-            ]}
+            mood={mood}
+            isSelected={selectedMood === mood.value}
             onPress={() => onSelectMood(mood.value)}
-          >
-            <Text style={styles.moodEmoji}>{mood.emoji}</Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <View style={styles.moodRow}>
-        {ADDITIONAL_MOODS.map((mood) => (
-          <Pressable
-            key={mood.value}
-            style={[
-              styles.moodButton,
-              selectedMood === mood.value && styles.moodButtonSelected,
-            ]}
-            onPress={() => onSelectMood(mood.value)}
-          >
-            <Text style={styles.moodEmoji}>{mood.emoji}</Text>
-          </Pressable>
+          />
         ))}
       </View>
     </View>
@@ -65,27 +81,33 @@ export const MoodSelector: React.FC<MoodSelectorProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 12,
+    gap: 16,
   },
   label: {
     fontSize: 16,
     fontWeight: "500",
     color: colors.text.primary,
   },
-  moodRow: {
+  moodGrid: {
     flexDirection: "row",
-    gap: 12,
-    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: GAP,
+  },
+  moodButtonContainer: {
+    width: itemWidth,
+    aspectRatio: 1,
   },
   moodButton: {
-    width: 70,
-    height: 70,
+    flex: 1,
     borderRadius: 16,
-    backgroundColor: colors.white,
+    backgroundColor: "#F3F4F6",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
     borderColor: "transparent",
+    paddingVertical: 12,
+    // paddingHorizontal: 8,
+    gap: 8,
   },
   moodButtonSelected: {
     borderColor: colors.primary,
@@ -93,5 +115,14 @@ const styles = StyleSheet.create({
   },
   moodEmoji: {
     fontSize: 32,
+  },
+  moodLabel: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: colors.text.secondary,
+    textAlign: "center",
+  },
+  moodLabelSelected: {
+    color: colors.primary,
   },
 });

@@ -189,12 +189,21 @@ export const DayDetailsDrawer: React.FC<DayDetailsDrawerProps> = ({
             </View>
 
             <View style={styles.buttons}>
-              <Button
-                title="Отмена"
-                onPress={handleClose}
-                variant="secondary"
-              />
-              <Button title="Сохранить" onPress={handleSave} />
+              <View style={styles.buttonWrapper}>
+                <Button
+                  title="Отмена"
+                  onPress={handleClose}
+                  variant="secondary"
+                  fullWidth={false}
+                />
+              </View>
+              <View style={styles.buttonWrapper}>
+                <Button
+                  title="Сохранить"
+                  onPress={handleSave}
+                  fullWidth={false}
+                />
+              </View>
             </View>
           </>
         )}
@@ -263,5 +272,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     marginTop: "auto",
+    width: "100%",
+  },
+  buttonWrapper: {
+    flex: 1,
   },
 });

@@ -8,16 +8,7 @@ export interface Cycle {
 export interface DailyLog {
   id: string;
   date: string;
-  mood?:
-    | "great"
-    | "good"
-    | "okay"
-    | "bad"
-    | "awful"
-    | "love"
-    | "happy"
-    | "sad"
-    | "sick";
+  mood?: "good" | "neutral" | "bad" | "irritated" | "tired" | "libido_high";
   symptoms?: string[];
   notes?: string;
   flow?: "light" | "medium" | "heavy";
@@ -34,13 +25,10 @@ export interface CycleStatus {
 }
 
 export const MOOD_EMOJIS: Record<DailyLog["mood"] & string, string> = {
-  great: "🥰",
-  good: "😊",
-  okay: "😐",
-  bad: "😢",
-  awful: "😭",
-  love: "😍",
-  happy: "😄",
-  sad: "😭",
-  sick: "🤒",
+  good: "🙂",
+  neutral: "😐",
+  bad: "😣",
+  irritated: "😤",
+  tired: "🥱",
+  libido_high: "🔥",
 };
