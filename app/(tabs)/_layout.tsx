@@ -18,7 +18,7 @@ export default function TabsLayout() {
           borderTopColor: colors.border,
           paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
           paddingTop: 8,
-          height: (insets.bottom > 0 ? insets.bottom : 8) + 46, // 46 - высота самих иконок
+          // height: (insets.bottom > 0 ? insets.bottom : 8) + 46, // 46 - высота самих иконок
           borderTopWidth: 1,
         },
         tabBarLabelStyle: {
