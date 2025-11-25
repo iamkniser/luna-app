@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { isSameDay } from "date-fns/isSameDay";
 import { ru } from "date-fns/locale";
+import { startOfDay } from "date-fns/startOfDay";
 import { memo, useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -31,10 +32,13 @@ const WeekCalendarComponent = ({
 
   const weekDays = useMemo(() => getWeekDays(currentDate), [currentDate]);
 
+  const today = startOfDay(new Date());
+
   return (
     <View style={styles.weekRow}>
       {weekDays.map((day) => {
         const isToday = isSameDay(day, currentDate);
+        const isFutureDay = day.getTime() > today.getTime();
         const dateStr = toISODate(day);
         const log = logsByDate[dateStr];
         const moodEmoji = log?.mood ? MOOD_EMOJIS[log.mood] : undefined;
@@ -44,7 +48,12 @@ const WeekCalendarComponent = ({
             key={dateStr}
             style={styles.dayContainer}
             activeOpacity={0.8}
-            onPress={() => onDayPress?.(day)}
+            disabled={isFutureDay}
+            onPress={() => {
+              if (!isFutureDay) {
+                onDayPress?.(day);
+              }
+            }}
           >
             <Text
               style={[
@@ -63,7 +72,11 @@ const WeekCalendarComponent = ({
                 ]}
               >
                 <Text
-                  style={[styles.dayNumber, isToday && styles.dayNumberCurrent]}
+                  style={[
+                    styles.dayNumber,
+                    isToday && styles.dayNumberCurrent,
+                    isFutureDay && styles.dayNumberFuture,
+                  ]}
                 >
                   {format(day, "d")}
                 </Text>
@@ -125,6 +138,9 @@ const styles = StyleSheet.create({
   },
   dayNumberCurrent: {
     color: colors.white,
+  },
+  dayNumberFuture: {
+    color: colors.text.light,
   },
   mood: {
     fontSize: 20,
