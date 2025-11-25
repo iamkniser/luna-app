@@ -1,3 +1,4 @@
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-gesture-handler";
@@ -11,14 +12,16 @@ const { GestureHandlerRootView } = GestureHandler;
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style="dark" backgroundColor={colors.background} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
-          navigationBarColor: colors.background,
-        }}
-      />
+      <BottomSheetModalProvider>
+        <StatusBar style="dark" backgroundColor={colors.background} />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+            navigationBarColor: colors.background,
+          }}
+        />
+      </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
 }

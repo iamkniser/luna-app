@@ -1,6 +1,7 @@
-import BottomSheet, {
+import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
+  BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -24,8 +25,9 @@ export const DayDetailsDrawer: React.FC<DayDetailsDrawerProps> = ({
   selectedDate,
   onClose,
 }) => {
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => ["75%"], []);
+  const previousDateRef = useRef<string | null>(null);
 
   const user = useUserStore((state) => state.user);
   const cycles = useCycleStore((state) => state.cycles);
@@ -36,32 +38,66 @@ export const DayDetailsDrawer: React.FC<DayDetailsDrawerProps> = ({
   const [notes, setNotes] = useState("");
   const [isPeriodDay, setIsPeriodDay] = useState(false);
 
-  const loadDayData = useCallback(() => {
-    if (!selectedDate) return;
-
-    const dateStr = toISODate(selectedDate);
-    const existingLog = getDailyLog(dateStr);
-
-    if (existingLog) {
-      setMood(existingLog.mood);
-      setNotes(existingLog.notes ?? "");
-      setIsPeriodDay(existingLog.isPeriodDay);
+  // Загружаем данные дня при изменении selectedDate
+  useEffect(() => {
+    if (!selectedDate) {
+      setMood(undefined);
+      setNotes("");
+      setIsPeriodDay(false);
+      previousDateRef.current = null;
       return;
     }
 
-    setMood(undefined);
-    setNotes("");
-    setIsPeriodDay(false);
-  }, [getDailyLog, selectedDate]);
+    const dateStr = toISODate(selectedDate);
 
-  useEffect(() => {
-    if (selectedDate) {
-      bottomSheetRef.current?.expand();
-      loadDayData();
-    } else {
-      bottomSheetRef.current?.close();
+    // Загружаем данные только если дата действительно изменилась
+    if (previousDateRef.current !== dateStr) {
+      const existingLog = getDailyLog(dateStr);
+
+      if (existingLog) {
+        setMood(existingLog.mood);
+        setNotes(existingLog.notes ?? "");
+        setIsPeriodDay(existingLog.isPeriodDay);
+      } else {
+        setMood(undefined);
+        setNotes("");
+        setIsPeriodDay(false);
+      }
+
+      previousDateRef.current = dateStr;
     }
-  }, [loadDayData, selectedDate]);
+  }, [selectedDate, getDailyLog]);
+
+  // Управляем открытием/закрытием drawer
+  useEffect(() => {
+    if (!selectedDate) {
+      bottomSheetRef.current?.dismiss();
+      previousDateRef.current = null;
+      return;
+    }
+
+    const dateStr = toISODate(selectedDate);
+    const dateChanged = previousDateRef.current !== dateStr;
+
+    // Если дата изменилась, сначала закрываем, потом открываем
+    // Это гарантирует корректное обновление данных
+    if (dateChanged) {
+      bottomSheetRef.current?.dismiss();
+      const timeoutId = setTimeout(() => {
+        bottomSheetRef.current?.present();
+        previousDateRef.current = dateStr;
+      }, 150);
+
+      return () => clearTimeout(timeoutId);
+    } else {
+      // Если дата не изменилась, просто открываем
+      const timeoutId = setTimeout(() => {
+        bottomSheetRef.current?.present();
+      }, 50);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [selectedDate]);
 
   const cycleDay = useMemo(() => {
     if (!selectedDate || !user) return null;
@@ -84,6 +120,7 @@ export const DayDetailsDrawer: React.FC<DayDetailsDrawerProps> = ({
   }, [isPeriodDay, mood, notes, onClose, selectedDate, updateDailyLog]);
 
   const handleClose = useCallback(() => {
+    previousDateRef.current = null;
     onClose();
   }, [onClose]);
 
@@ -93,70 +130,76 @@ export const DayDetailsDrawer: React.FC<DayDetailsDrawerProps> = ({
         {...props}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
-        onPress={handleClose}
+        opacity={0.5}
+        enableTouchThrough={false}
+        pressBehavior="close"
       />
     ),
-    [handleClose]
+    []
   );
 
-  if (!selectedDate) {
-    return null;
-  }
-
+  // BottomSheetModal автоматически рендерится поверх всего контента
   return (
-    <BottomSheet
+    <BottomSheetModal
       ref={bottomSheetRef}
-      index={-1}
       snapPoints={snapPoints}
       enablePanDownToClose
-      onClose={handleClose}
+      onDismiss={handleClose}
       backdropComponent={renderBackdrop}
       backgroundStyle={styles.bottomSheetBackground}
       handleIndicatorStyle={styles.handleIndicator}
     >
       <BottomSheetView style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.date}>
-            {formatDate(selectedDate, "d MMMM yyyy")}
-          </Text>
-          {cycleDay !== null && cycleDay !== undefined && (
-            <Text style={styles.cycleDay}>День цикла: {cycleDay}</Text>
-          )}
-        </View>
+        {selectedDate && (
+          <>
+            <View style={styles.header}>
+              <Text style={styles.date}>
+                {formatDate(selectedDate, "d MMMM yyyy")}
+              </Text>
+              {cycleDay !== null && cycleDay !== undefined && (
+                <Text style={styles.cycleDay}>День цикла: {cycleDay}</Text>
+              )}
+            </View>
 
-        <MoodSelector selectedMood={mood} onSelectMood={setMood} />
+            <MoodSelector selectedMood={mood} onSelectMood={setMood} />
 
-        <View style={styles.section}>
-          <Text style={styles.label}>Заметка</Text>
-          <TextInput
-            style={styles.notesInput}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="Добавь заметку о самочувствии..."
-            placeholderTextColor={colors.text.light}
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-          />
-        </View>
+            <View style={styles.section}>
+              <Text style={styles.label}>Заметка</Text>
+              <TextInput
+                style={styles.notesInput}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Добавь заметку о самочувствии..."
+                placeholderTextColor={colors.text.light}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
 
-        <View style={styles.periodSection}>
-          <Text style={styles.periodLabel}>День менструации</Text>
-          <Switch
-            value={isPeriodDay}
-            onValueChange={setIsPeriodDay}
-            trackColor={{ false: "#E5E7EB", true: colors.primaryLight }}
-            thumbColor={isPeriodDay ? colors.primary : "#f4f3f4"}
-            ios_backgroundColor="#E5E7EB"
-          />
-        </View>
+            <View style={styles.periodSection}>
+              <Text style={styles.periodLabel}>День менструации</Text>
+              <Switch
+                value={isPeriodDay}
+                onValueChange={setIsPeriodDay}
+                trackColor={{ false: "#E5E7EB", true: colors.primaryLight }}
+                thumbColor={isPeriodDay ? colors.primary : "#f4f3f4"}
+                ios_backgroundColor="#E5E7EB"
+              />
+            </View>
 
-        <View style={styles.buttons}>
-          <Button title="Отмена" onPress={handleClose} variant="secondary" />
-          <Button title="Сохранить" onPress={handleSave} />
-        </View>
+            <View style={styles.buttons}>
+              <Button
+                title="Отмена"
+                onPress={handleClose}
+                variant="secondary"
+              />
+              <Button title="Сохранить" onPress={handleSave} />
+            </View>
+          </>
+        )}
       </BottomSheetView>
-    </BottomSheet>
+    </BottomSheetModal>
   );
 };
 

@@ -37,12 +37,13 @@ const WeekCalendarComponent = ({
     >
       {weekDays.map((day) => {
         const isToday = isSameDay(day, currentDate);
-        const log = getDailyLog(toISODate(day));
+        const dateStr = toISODate(day);
+        const log = getDailyLog(dateStr);
         const moodEmoji = log?.mood ? MOOD_EMOJIS[log.mood] : undefined;
 
         return (
           <TouchableOpacity
-            key={day.toISOString()}
+            key={dateStr}
             style={[
               styles.card,
               isToday ? styles.cardCurrent : styles.cardDefault,
