@@ -130,8 +130,7 @@ export const DayDetailsDrawer: React.FC<DayDetailsDrawerProps> = ({
         {...props}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
-        opacity={0.5}
-        enableTouchThrough={false}
+        opacity={0.4}
         pressBehavior="close"
       />
     ),
@@ -143,6 +142,7 @@ export const DayDetailsDrawer: React.FC<DayDetailsDrawerProps> = ({
     <BottomSheetModal
       ref={bottomSheetRef}
       snapPoints={snapPoints}
+      stackBehavior="push"
       enablePanDownToClose
       onDismiss={handleClose}
       backdropComponent={renderBackdrop}

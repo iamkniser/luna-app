@@ -36,6 +36,10 @@ export default function HomeScreen() {
     setSelectedDate(newDate);
   }, []);
 
+  const handleCalendarDatePress = useCallback((date: Date) => {
+    setSelectedDate(new Date(date));
+  }, []);
+
   const handleCloseDrawer = useCallback(() => {
     setSelectedDate(null);
   }, []);
@@ -123,6 +127,7 @@ export default function HomeScreen() {
       <CalendarDrawer
         isOpen={isCalendarOpen}
         onClose={() => setCalendarOpen(false)}
+        onSelectDate={handleCalendarDatePress}
       />
     </SafeAreaView>
   );

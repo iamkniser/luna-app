@@ -60,6 +60,7 @@ LocaleConfig.defaultLocale = "ru";
 interface CalendarDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  onSelectDate: (date: Date) => void;
 }
 
 const CALENDAR_START = "2025-10-01";
@@ -68,6 +69,7 @@ const CALENDAR_END = "2027-12-31";
 export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
   isOpen,
   onClose,
+  onSelectDate,
 }) => {
   const sheetRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
@@ -136,9 +138,9 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
     <BottomSheetModal
       ref={sheetRef}
       snapPoints={snapPoints}
+      stackBehavior="push"
       enableDynamicSizing={false}
       enablePanDownToClose={false}
-      onDismiss={onClose}
       handleComponent={null}
       backgroundStyle={styles.background}
       backdropComponent={renderBackdrop}
@@ -159,7 +161,7 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
         </View>
 
         {/* Calendar */}
-        <View style={{ flex: 1, backgroundColor: "red" }}>
+        <View style={{ flex: 1 }}>
           <CalendarList
             style={{ height: "100%" }}
             contentContainerStyle={{ paddingBottom: 40 }}
@@ -168,7 +170,10 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
             futureScrollRange={24}
             minDate={CALENDAR_START}
             maxDate={CALENDAR_END}
-            onDayPress={(day: DateObject) => setSelectedDate(day.dateString)}
+            onDayPress={(day: DateObject) => {
+              setSelectedDate(day.dateString);
+              onSelectDate(new Date(day.dateString));
+            }}
             markedDates={markedDates}
             firstDay={1}
             theme={calendarTheme}
