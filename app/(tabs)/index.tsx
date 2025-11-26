@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CalendarDrawer } from "@/src/components/calendar/CalendarDrawer";
 import { DayDetailsDrawer } from "@/src/components/calendar/DayDetailsDrawer";
 import Button from "@/src/components/common/Button";
 import { CycleParameter } from "@/src/components/home/CycleParameter";
@@ -21,6 +22,7 @@ export default function HomeScreen() {
   const cycles = useCycleStore((state) => state.cycles);
   const [currentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isCalendarOpen, setCalendarOpen] = useState(false);
 
   const cycleStatus = useMemo(() => {
     if (!user) return null;
@@ -83,9 +85,7 @@ export default function HomeScreen() {
           <Button
             title="Открыть календарь"
             icon={<Ionicons name="calendar" size={24} color={colors.primary} />}
-            onPress={() => {
-              console.log("Open calendar");
-            }}
+            onPress={() => setCalendarOpen(true)}
             variant="secondary"
             fullWidth
           />
@@ -119,6 +119,10 @@ export default function HomeScreen() {
       <DayDetailsDrawer
         selectedDate={selectedDate}
         onClose={handleCloseDrawer}
+      />
+      <CalendarDrawer
+        isOpen={isCalendarOpen}
+        onClose={() => setCalendarOpen(false)}
       />
     </SafeAreaView>
   );
