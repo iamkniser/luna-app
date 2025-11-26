@@ -10,6 +10,8 @@ import { CalendarList, DateObject, LocaleConfig } from "react-native-calendars";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors } from "@/src/constants/colors";
+import { useCycleStore } from "@/src/store/cycleStore";
+import { DailyLog } from "@/src/types/cycle";
 
 // ---- Русская локаль ----
 LocaleConfig.locales["ru"] = {
@@ -69,6 +71,7 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
 }) => {
   const sheetRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
+  const dailyLogs = useCycleStore((state) => state.dailyLogs);
 
   const snapPoints = useMemo(() => ["100%"], []);
 
@@ -81,16 +84,38 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
 
   const [selectedDate, setSelectedDate] = useState(initialDate);
 
-  const markedDates = useMemo(
-    () => ({
-      [selectedDate]: {
+  const markedDates = useMemo(() => {
+    const result: Record<string, any> = {};
+
+    // точки для дней, где есть любые данные
+    dailyLogs.forEach((log: DailyLog) => {
+      const hasData =
+        log.mood ||
+        log.notes ||
+        log.isPeriodDay ||
+        (log.symptoms && log.symptoms.length > 0);
+
+      if (!hasData) return;
+
+      result[log.date] = {
+        ...(result[log.date] || {}),
+        marked: true,
+        dotColor: colors.primary,
+      };
+    });
+
+    // выделение выбранной даты
+    if (selectedDate) {
+      result[selectedDate] = {
+        ...(result[selectedDate] || {}),
         selected: true,
         selectedColor: colors.primary,
         selectedTextColor: colors.white,
-      },
-    }),
-    [selectedDate]
-  );
+      };
+    }
+
+    return result;
+  }, [dailyLogs, selectedDate]);
 
   useEffect(() => {
     if (isOpen) sheetRef.current?.present();
