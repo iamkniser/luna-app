@@ -5,50 +5,11 @@ import { Platform, StyleSheet, Text, View } from "react-native";
 import { colors } from "@/src/constants/colors";
 import { typography } from "@/src/constants/typography";
 import { CycleStatus } from "@/src/types/cycle";
+import { getPhaseStyles } from "./phaseStyles";
 
 interface StatusCardProps {
   cycleStatus: CycleStatus;
 }
-
-export const getPhaseStyles = (phase: CycleStatus["phase"]) => {
-  switch (phase) {
-    case "menstruation":
-      return {
-        gradient: ["#FFE4E9", "#FFD4DD"] as const,
-        icon: "🩸",
-        iconBackground: "#FFFFFF",
-        textColor: colors.text.dark,
-      };
-    case "follicular":
-      return {
-        gradient: ["#FFE9F7", "#F8D9FF"] as const,
-        icon: "💗",
-        iconBackground: "#FFFFFF",
-        textColor: colors.text.dark,
-      };
-    case "ovulation":
-      return {
-        gradient: ["#E3FFE8", "#C8F7D8"] as const,
-        icon: "✨",
-        iconBackground: "#FFFFFF",
-        textColor: colors.text.dark,
-      };
-    case "luteal":
-      return {
-        gradient: ["#FFF6D9", "#FFE9B8"] as const,
-        icon: "☀️",
-        iconBackground: "#FFFFFF",
-        textColor: colors.text.dark,
-      };
-    default:
-      return {
-        gradient: ["#FFE4E9", "#FFD4DD"] as const,
-        icon: "💗",
-        iconBackground: "#FFFFFF",
-        textColor: colors.text.dark,
-      };
-  }
-};
 
 const StatusCardComponent = ({ cycleStatus }: StatusCardProps) => {
   const phaseStyles = useMemo(
@@ -129,7 +90,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 16,
