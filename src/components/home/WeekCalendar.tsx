@@ -7,9 +7,12 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { colors } from "@/src/constants/colors";
 import { typography } from "@/src/constants/typography";
+import { calculateCycleStatus } from "@/src/services/cycleCalculations";
 import { useCycleStore } from "@/src/store/cycleStore";
+import { useUserStore } from "@/src/store/userStore";
 import { DailyLog, MOOD_EMOJIS } from "@/src/types/cycle";
 import { getWeekDays, toISODate } from "@/src/utils/dateHelpers";
+import { getPhaseDayBackground } from "./phaseStyles";
 
 interface WeekCalendarProps {
   currentDate: Date;
@@ -21,6 +24,8 @@ const WeekCalendarComponent = ({
   onDayPress,
 }: WeekCalendarProps) => {
   const dailyLogs = useCycleStore((state) => state.dailyLogs);
+  const cycles = useCycleStore((state) => state.cycles);
+  const user = useUserStore((state) => state.user);
 
   const logsByDate = useMemo(() => {
     const map: Record<string, DailyLog> = {};
@@ -42,6 +47,14 @@ const WeekCalendarComponent = ({
         const dateStr = toISODate(day);
         const log = logsByDate[dateStr];
         const moodEmoji = log?.mood ? MOOD_EMOJIS[log.mood] : undefined;
+
+        const phaseBackground = user
+          ? (() => {
+              const status = calculateCycleStatus(user, cycles, day);
+              if (!status) return styles.dayCircleDefault.backgroundColor;
+              return getPhaseDayBackground(status.phase);
+            })()
+          : styles.dayCircleDefault.backgroundColor;
 
         return (
           <TouchableOpacity
@@ -68,7 +81,8 @@ const WeekCalendarComponent = ({
               <View
                 style={[
                   styles.dayCircle,
-                  isToday ? styles.dayCircleCurrent : styles.dayCircleDefault,
+                  !isToday && { backgroundColor: phaseBackground },
+                  isToday && styles.dayCircleCurrent,
                 ]}
               >
                 <Text
