@@ -73,10 +73,10 @@ export default function HomeScreen() {
             Текущая неделя
           </Text>
           <WeekCalendar currentDate={currentDate} onDayPress={handleDayPress} />
-          <CycleProgressBar
+          {/* <CycleProgressBar
             currentDay={cycleStatus?.currentDay ?? 1}
             totalDays={user.averageCycleLength}
-          />
+          /> */}
         </View>
 
         {cycleStatus && (
