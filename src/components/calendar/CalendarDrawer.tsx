@@ -141,6 +141,7 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
       stackBehavior="push"
       enableDynamicSizing={false}
       enablePanDownToClose={false}
+      enableContentPanningGesture={false}
       handleComponent={null}
       backgroundStyle={styles.background}
       backdropComponent={renderBackdrop}
@@ -181,6 +182,7 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
             pagingEnabled={false}
             showScrollIndicator={false}
             removeClippedSubviews={false}
+            nestedScrollEnabled={true}
           />
         </View>
       </View>

@@ -280,6 +280,7 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: "auto",
     width: "100%",
+    paddingBottom: 20,
   },
   buttonWrapper: {
     flex: 1,
