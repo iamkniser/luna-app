@@ -157,11 +157,12 @@ const styles = StyleSheet.create({
     color: colors.text.light,
   },
   mood: {
-    fontSize: 20,
+    fontSize: 16,
+    opacity: 0.9,
   },
   moodEmojiWrapper: {
     position: "absolute",
-    bottom: -6,
+    bottom: -8,
     alignItems: "center",
   },
 });
