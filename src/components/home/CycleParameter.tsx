@@ -29,10 +29,11 @@ const styles = StyleSheet.create({
   },
   label: {
     color: colors.text.light,
+    opacity: 0.9,
   },
   value: {
     color: colors.text.dark,
-    fontWeight: "700",
+    fontWeight: "600",
   },
 });
 

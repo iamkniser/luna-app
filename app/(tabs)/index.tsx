@@ -5,8 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { CalendarDrawer } from "@/src/components/calendar/CalendarDrawer";
 import { DayDetailsDrawer } from "@/src/components/calendar/DayDetailsDrawer";
 import Button from "@/src/components/common/Button";
-import { CycleParameter } from "@/src/components/home/CycleParameter";
-import { CycleProgressBar } from "@/src/components/home/CycleProgressBar";
+import { CycleParametersSection } from "@/src/components/home/CycleParametersSection";
 import { StatusCard } from "@/src/components/home/StatusCard";
 import { WeekCalendar } from "@/src/components/home/WeekCalendar";
 import { colors } from "@/src/constants/colors";
@@ -14,7 +13,7 @@ import { typography } from "@/src/constants/typography";
 import { calculateCycleStatus } from "@/src/services/cycleCalculations";
 import { useCycleStore } from "@/src/store/cycleStore";
 import { useUserStore } from "@/src/store/userStore";
-import { formatDate, formatDateShort } from "@/src/utils/dateHelpers";
+import { formatDate } from "@/src/utils/dateHelpers";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function HomeScreen() {
@@ -95,29 +94,7 @@ export default function HomeScreen() {
           />
         </View>
 
-        <View style={styles.section}>
-          <Text style={[typography.h4, styles.sectionTitle]}>
-            Параметры цикла
-          </Text>
-          <View style={styles.parametersContainer}>
-            <CycleParameter
-              label="Средняя длина"
-              value={`${user.averageCycleLength} дней`}
-            />
-            {user.lastPeriodDate && (
-              <CycleParameter
-                label="Начало последней менструации"
-                value={formatDateShort(user.lastPeriodDate)}
-              />
-            )}
-            {cycleStatus?.daysUntilNextPeriod !== undefined && (
-              <CycleParameter
-                label="До следующей менструации"
-                value={`${cycleStatus.daysUntilNextPeriod} дней`}
-              />
-            )}
-          </View>
-        </View>
+        <CycleParametersSection user={user} cycleStatus={cycleStatus} />
       </ScrollView>
 
       <DayDetailsDrawer
@@ -167,11 +144,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: colors.text.primary,
-  },
-  parametersContainer: {
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    backgroundColor: colors.white,
   },
   loadingContainer: {
     flex: 1,
