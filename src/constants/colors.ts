@@ -10,7 +10,7 @@ export const colors = {
   text: {
     primary: "#1F1F1F",
     secondary: "#6B7280",
-    light: "#9CA3AF",
+    light: "#B0A9C0",
     dark: "#1F1F1F",
   },
 
