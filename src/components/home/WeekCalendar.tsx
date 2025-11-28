@@ -95,7 +95,7 @@ const WeekCalendarComponent = ({
                   {format(day, "d")}
                 </Text>
               </View>
-              {moodEmoji && (
+              {moodEmoji && !isToday && (
                 <View style={styles.moodEmojiWrapper}>
                   <Text style={styles.mood}>{moodEmoji}</Text>
                 </View>
