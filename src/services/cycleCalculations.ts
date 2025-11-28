@@ -48,3 +48,50 @@ export const getPredictedNextPeriodDate = (user: User): Date => {
   const lastPeriod = parseISO(user.lastPeriodDate);
   return addDays(lastPeriod, user.averageCycleLength);
 };
+
+export const getExpectedOvulationDate = (user: User): Date | null => {
+  if (!user.lastPeriodDate) return null;
+  const nextPeriod = getPredictedNextPeriodDate(user);
+  // Овуляция = за 14 дней до следующей менструации
+  return addDays(nextPeriod, -14);
+};
+
+export const getDaysUntilPhaseEnd = (
+  cycleStatus: CycleStatus,
+  user: User
+): number | null => {
+  const cycleLength = user.averageCycleLength;
+  const currentDay = cycleStatus.currentDay;
+
+  if (!cycleLength || currentDay <= 0) return null;
+
+  // Центр овуляции: за 14 дней до конца цикла
+  const ovulationCenterDay = cycleLength - 14;
+
+  // Базовые границы фаз, адаптированные под длину цикла
+  const menstruationEnd = 5; // 1–5
+  const ovulationStart = Math.max(menstruationEnd + 1, ovulationCenterDay - 1); // ~13
+  const ovulationEnd = Math.min(cycleLength, ovulationCenterDay + 1); // ~15
+  const follicularEnd = Math.max(ovulationStart - 1, menstruationEnd + 1); // ~6–12
+  const lutealStart = Math.min(cycleLength, ovulationEnd + 1); // ~16
+
+  let phaseEndDay: number;
+
+  switch (cycleStatus.phase) {
+    case "menstruation":
+      phaseEndDay = menstruationEnd;
+      break;
+    case "follicular":
+      phaseEndDay = follicularEnd;
+      break;
+    case "ovulation":
+      phaseEndDay = ovulationEnd;
+      break;
+    case "luteal":
+    default:
+      phaseEndDay = cycleLength;
+      break;
+  }
+
+  return Math.max(phaseEndDay - currentDay, 0);
+};

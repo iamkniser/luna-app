@@ -30,10 +30,12 @@ const styles = StyleSheet.create({
   label: {
     color: colors.text.light,
     opacity: 0.9,
+    fontSize: 14,
   },
   value: {
     color: colors.text.dark,
     fontWeight: "600",
+    fontSize: 14,
   },
 });
 

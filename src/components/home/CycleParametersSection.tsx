@@ -2,6 +2,10 @@ import { memo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { colors } from "@/src/constants/colors";
+import {
+  getDaysUntilPhaseEnd,
+  getExpectedOvulationDate,
+} from "@/src/services/cycleCalculations";
 import type { CycleStatus } from "@/src/types/cycle";
 import type { User } from "@/src/types/user";
 import { formatDateShort } from "@/src/utils/dateHelpers";
@@ -36,6 +40,28 @@ const CycleParametersSectionComponent = ({
             value={`${cycleStatus.daysUntilNextPeriod} дней`}
           />
         )}
+        {user.lastPeriodDate &&
+          (() => {
+            const ovulationDate = getExpectedOvulationDate(user);
+            if (!ovulationDate) return null;
+            return (
+              <CycleParameter
+                label="Ожидаемая овуляция"
+                value={formatDateShort(ovulationDate)}
+              />
+            );
+          })()}
+        {cycleStatus &&
+          (() => {
+            const daysLeft = getDaysUntilPhaseEnd(cycleStatus, user);
+            if (daysLeft === null) return null;
+            return (
+              <CycleParameter
+                label="До конца фазы"
+                value={`${daysLeft} дней`}
+              />
+            );
+          })()}
       </View>
     </View>
   );
