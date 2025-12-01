@@ -8,7 +8,12 @@ interface ButtonProps {
   title: string;
   icon?: React.ReactNode;
   onPress: () => void;
-  variant?: "primary" | "secondary" | "danger";
+  variant?:
+    | "primary"
+    | "secondary"
+    | "danger"
+    | "magenta"
+    | "cardGhost";
   fullWidth?: boolean;
   disabled?: boolean;
 }
@@ -37,6 +42,10 @@ const Button = ({
       ? styles.secondary
       : variant === "danger"
       ? styles.danger
+      : variant === "magenta"
+      ? styles.magenta
+      : variant === "cardGhost"
+      ? styles.cardGhost
       : styles.primary;
 
   const labelVariantStyle =
@@ -44,6 +53,8 @@ const Button = ({
       ? styles.secondaryLabel
       : variant === "danger"
       ? styles.dangerLabel
+      : variant === "cardGhost"
+      ? styles.cardGhostLabel
       : styles.primaryLabel;
 
   return (
@@ -85,6 +96,10 @@ const styles = StyleSheet.create({
   primary: {
     backgroundColor: colors.primary,
   },
+  magenta: {
+    backgroundColor: "#E63FA3",
+    height: 48,
+  },
   secondary: {
     backgroundColor: colors.white,
     borderWidth: 1,
@@ -94,6 +109,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.danger,
+  },
+  cardGhost: {
+    backgroundColor: "#FFE7D1",
+    borderWidth: 1,
+    borderColor: "#FFC999",
+    height: 48,
   },
   labelBase: {
     fontWeight: "700",
@@ -107,6 +128,9 @@ const styles = StyleSheet.create({
   },
   dangerLabel: {
     color: colors.danger,
+  },
+  cardGhostLabel: {
+    color: colors.text.primary,
   },
   content: {
     flexDirection: "row",
