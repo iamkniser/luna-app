@@ -177,7 +177,7 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
     );
 
     return result;
-  }, [user, cycles]);
+  }, [disablePhases, user, cycles]);
 
   const markedDates = useMemo(() => {
     // начинаем с фазовых подсветок
@@ -267,6 +267,31 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
           </Pressable>
         </View>
 
+        {/* Legend */}
+        {!disablePhases && hasPeriodMarks && (
+          <View style={styles.legendRow}>
+            <View style={styles.legendItem}>
+              <View
+                style={[
+                  styles.legendDot,
+                  { backgroundColor: getPhaseDayBackground("menstruation") },
+                ]}
+              />
+              <Text style={styles.legendLabel}>Менструация</Text>
+            </View>
+
+            <View style={styles.legendItem}>
+              <View
+                style={[
+                  styles.legendDot,
+                  { backgroundColor: getPhaseDayBackground("ovulation") },
+                ]}
+              />
+              <Text style={styles.legendLabel}>Овуляция</Text>
+            </View>
+          </View>
+        )}
+
         {/* Calendar */}
         <View style={{ flex: 1 }}>
           <CalendarList
@@ -282,7 +307,9 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
               onSelectDate(new Date(day.dateString));
             }}
             markedDates={markedDates}
-            markingType={!disablePhases && hasPeriodMarks ? "period" : undefined}
+            markingType={
+              !disablePhases && hasPeriodMarks ? "period" : undefined
+            }
             firstDay={1}
             theme={calendarTheme}
             horizontal={false}
@@ -312,6 +339,28 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     paddingBottom: 16,
     paddingHorizontal: 20,
+  },
+  legendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendLabel: {
+    fontSize: 13,
+    color: colors.text.secondary,
   },
   closeButton: {
     width: 40,
