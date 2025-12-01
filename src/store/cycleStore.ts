@@ -6,12 +6,16 @@ import { createJSONStorage, persist } from "zustand/middleware";
 interface CycleStore {
   cycles: Cycle[];
   dailyLogs: DailyLog[];
+  isWaitingForNextPeriod: boolean;
+  recoverySuppressedForStartDate: string | null;
   addCycle: (cycle: Cycle) => void;
   updateCycle: (id: string, data: Partial<Cycle>) => void;
   addDailyLog: (log: DailyLog) => void;
   updateDailyLog: (date: string, data: Partial<DailyLog>) => void;
   getDailyLog: (date: string) => DailyLog | undefined;
   deleteDailyLog: (date: string) => void;
+  setWaitingForNextPeriod: (value: boolean) => void;
+  setRecoverySuppressedForStartDate: (startDate: string | null) => void;
 }
 
 export const useCycleStore = create<CycleStore>()(
@@ -19,6 +23,8 @@ export const useCycleStore = create<CycleStore>()(
     (set, get) => ({
       cycles: [],
       dailyLogs: [],
+      isWaitingForNextPeriod: false,
+      recoverySuppressedForStartDate: null,
 
       addCycle: (cycle: Cycle) => {
         set((state) => ({
@@ -77,10 +83,36 @@ export const useCycleStore = create<CycleStore>()(
           dailyLogs: state.dailyLogs.filter((log) => log.date !== date),
         }));
       },
+
+      setWaitingForNextPeriod: (value: boolean) => {
+        set({ isWaitingForNextPeriod: value });
+      },
+
+      setRecoverySuppressedForStartDate: (startDate: string | null) => {
+        set({ recoverySuppressedForStartDate: startDate });
+      },
     }),
     {
       name: "luna-cycle-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      version: 2,
+      migrate: (persistedState: any, version) => {
+        if (!persistedState) return {};
+        if (version < 2) {
+          // Сбрасываем подавление карточки восстановления при миграции
+          return {
+            ...persistedState,
+            recoverySuppressedForStartDate: null,
+          };
+        }
+        return persistedState;
+      },
+      partialize: (state) => ({
+        cycles: state.cycles,
+        dailyLogs: state.dailyLogs,
+        isWaitingForNextPeriod: state.isWaitingForNextPeriod,
+        recoverySuppressedForStartDate: null, // не сохраняем подавление, чтобы оно сбрасывалось при перезапуске
+      }),
     }
   )
 );

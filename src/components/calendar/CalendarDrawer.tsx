@@ -67,6 +67,7 @@ interface CalendarDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectDate: (date: Date) => void;
+  disablePhases?: boolean;
 }
 
 const CALENDAR_START = "2025-10-01";
@@ -76,6 +77,7 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
   isOpen,
   onClose,
   onSelectDate,
+  disablePhases = false,
 }) => {
   const sheetRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
@@ -96,6 +98,8 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
 
   // Отдельно считаем фазовые периоды (дорогая операция, зависит только от профиля и циклов)
   const phaseMarkedDates = useMemo(() => {
+    if (disablePhases) return {};
+
     const result: Record<string, any> = {};
 
     if (!user || !user.lastPeriodDate) return result;
@@ -254,7 +258,7 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
           <View style={styles.header}>
             <Text style={styles.title}>Календарь</Text>
             <Text style={styles.description}>
-              Здесь будет отображаться твой календарь цикла.
+              Выбери дату для просмотра данных или отметь дни с периодом
             </Text>
           </View>
 
@@ -278,7 +282,7 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
               onSelectDate(new Date(day.dateString));
             }}
             markedDates={markedDates}
-            markingType={hasPeriodMarks ? "period" : undefined}
+            markingType={!disablePhases && hasPeriodMarks ? "period" : undefined}
             firstDay={1}
             theme={calendarTheme}
             horizontal={false}

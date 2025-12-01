@@ -2,6 +2,15 @@ import { Cycle, CycleStatus } from "@/src/types/cycle";
 import { User } from "@/src/types/user";
 import { addDays, differenceInDays, parseISO } from "date-fns";
 
+export const getDaysSinceLastPeriod = (
+  user: User,
+  currentDate: Date = new Date()
+): number | null => {
+  if (!user.lastPeriodDate) return null;
+  const lastPeriodStart = parseISO(user.lastPeriodDate);
+  return differenceInDays(currentDate, lastPeriodStart) + 1;
+};
+
 export const calculateCycleStatus = (
   user: User,
   cycles: Cycle[],
@@ -12,6 +21,14 @@ export const calculateCycleStatus = (
   const lastPeriodStart = parseISO(user.lastPeriodDate);
   const daysSinceLastPeriod =
     differenceInDays(currentDate, lastPeriodStart) + 1;
+
+  // Потерянный цикл: прогнозы считаем невалидными
+  const isCycleLost =
+    daysSinceLastPeriod > user.averageCycleLength + 5 ||
+    daysSinceLastPeriod > 40;
+  if (isCycleLost) {
+    return null;
+  }
 
   const periodLength = 5;
   const isPeriodActive = daysSinceLastPeriod <= periodLength;

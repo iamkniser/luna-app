@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { differenceInDays, parseISO } from "date-fns";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -6,27 +7,79 @@ import { CalendarDrawer } from "@/src/components/calendar/CalendarDrawer";
 import { DayDetailsDrawer } from "@/src/components/calendar/DayDetailsDrawer";
 import Button from "@/src/components/common/Button";
 import { CycleParametersSection } from "@/src/components/home/CycleParametersSection";
+import { RecoveryCard } from "@/src/components/home/RecoveryCard";
 import { StatusCard } from "@/src/components/home/StatusCard";
 import { WeekCalendar } from "@/src/components/home/WeekCalendar";
 import { colors } from "@/src/constants/colors";
 import { typography } from "@/src/constants/typography";
-import { calculateCycleStatus } from "@/src/services/cycleCalculations";
+import {
+  calculateCycleStatus,
+  getDaysSinceLastPeriod,
+} from "@/src/services/cycleCalculations";
 import { useCycleStore } from "@/src/store/cycleStore";
 import { useUserStore } from "@/src/store/userStore";
-import { formatDate } from "@/src/utils/dateHelpers";
+import { formatDate, toISODate } from "@/src/utils/dateHelpers";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function HomeScreen() {
   const user = useUserStore((state) => state.user);
   const cycles = useCycleStore((state) => state.cycles);
+  const dailyLogs = useCycleStore((state) => state.dailyLogs);
+  const isWaitingForNextPeriod = useCycleStore(
+    (state) => state.isWaitingForNextPeriod
+  );
+  const recoverySuppressedForStartDate = useCycleStore(
+    (state) => state.recoverySuppressedForStartDate
+  );
+  const setWaitingForNextPeriod = useCycleStore(
+    (state) => state.setWaitingForNextPeriod
+  );
+  const setRecoverySuppressedForStartDate = useCycleStore(
+    (state) => state.setRecoverySuppressedForStartDate
+  );
+  const updateDailyLog = useCycleStore((state) => state.updateDailyLog);
+  const updateUser = useUserStore((state) => state.updateUser);
   const [currentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isCalendarOpen, setCalendarOpen] = useState(false);
 
   const cycleStatus = useMemo(() => {
-    if (!user) return null;
+    if (!user || isWaitingForNextPeriod) return null;
     return calculateCycleStatus(user, cycles, currentDate);
-  }, [user, cycles, currentDate]);
+  }, [user, cycles, currentDate, isWaitingForNextPeriod]);
+
+  const daysSinceLastPeriod = useMemo(() => {
+    if (!user) return null;
+    return getDaysSinceLastPeriod(user, currentDate);
+  }, [currentDate, user]);
+
+  const hasPeriodLogSinceLastPeriod = useMemo(() => {
+    if (!user?.lastPeriodDate) return false;
+    const lastStart = parseISO(user.lastPeriodDate);
+    return dailyLogs.some((log) => {
+      if (!log.isPeriodDay) return false;
+      const logDate = parseISO(log.date);
+      if (logDate < lastStart) return false;
+      return (
+        differenceInDays(logDate, lastStart) <= user.averageCycleLength + 1
+      );
+    });
+  }, [dailyLogs, user]);
+
+  const shouldShowRecoveryCard = useMemo(() => {
+    if (!user?.lastPeriodDate) return false;
+    if (isWaitingForNextPeriod) return false;
+    if (recoverySuppressedForStartDate === user.lastPeriodDate) return false;
+    if (hasPeriodLogSinceLastPeriod) return false;
+    if (daysSinceLastPeriod === null) return false;
+    return daysSinceLastPeriod > user.averageCycleLength + 3;
+  }, [
+    daysSinceLastPeriod,
+    hasPeriodLogSinceLastPeriod,
+    isWaitingForNextPeriod,
+    recoverySuppressedForStartDate,
+    user,
+  ]);
 
   const handleDayPress = useCallback((date: Date) => {
     // Создаем новый объект Date для гарантии обновления состояния
@@ -42,6 +95,35 @@ export default function HomeScreen() {
   const handleCloseDrawer = useCallback(() => {
     setSelectedDate(null);
   }, []);
+
+  const handleRecoveryPeriodStarted = useCallback(
+    (date: Date) => {
+      if (!user) return;
+      const isoDate = date.toISOString();
+
+      updateUser({ lastPeriodDate: isoDate });
+      updateDailyLog(toISODate(date), { isPeriodDay: true });
+      setWaitingForNextPeriod(false);
+      setRecoverySuppressedForStartDate(null);
+    },
+    [
+      setRecoverySuppressedForStartDate,
+      setWaitingForNextPeriod,
+      updateDailyLog,
+      updateUser,
+      user,
+    ]
+  );
+
+  const handleRecoveryNoPeriod = useCallback(() => {
+    if (!user?.lastPeriodDate) return;
+    setWaitingForNextPeriod(true);
+    setRecoverySuppressedForStartDate(user.lastPeriodDate);
+  }, [
+    setRecoverySuppressedForStartDate,
+    setWaitingForNextPeriod,
+    user?.lastPeriodDate,
+  ]);
 
   if (!user) {
     return (
@@ -68,21 +150,34 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[typography.h4, styles.sectionTitle]}>
-            Текущая неделя
-          </Text>
-          <WeekCalendar currentDate={currentDate} onDayPress={handleDayPress} />
-          {/* <CycleProgressBar
-            currentDay={cycleStatus?.currentDay ?? 1}
-            totalDays={user.averageCycleLength}
-          /> */}
+          <Text style={[typography.h4, styles.sectionTitle]}>Текущая неделя</Text>
+          <WeekCalendar
+            currentDate={currentDate}
+            onDayPress={handleDayPress}
+            disablePhaseColors={isWaitingForNextPeriod}
+          />
         </View>
 
-        {cycleStatus && (
-          <View style={styles.section}>
-            <StatusCard cycleStatus={cycleStatus} />
-          </View>
-        )}
+        <View style={styles.section}>
+          {shouldShowRecoveryCard ? (
+            <RecoveryCard
+              user={user}
+              onPeriodStarted={handleRecoveryPeriodStarted}
+              onNoPeriod={handleRecoveryNoPeriod}
+            />
+          ) : isWaitingForNextPeriod ? (
+            <View style={styles.waitingCard}>
+              <Text style={styles.waitingTitle}>
+                Ждём начала следующей менструации
+              </Text>
+              <Text style={styles.waitingSubtitle}>
+                Отметь новый день начала, чтобы восстановить прогнозы
+              </Text>
+            </View>
+          ) : (
+            cycleStatus && <StatusCard cycleStatus={cycleStatus} />
+          )}
+        </View>
 
         <View style={styles.section}>
           <Button
@@ -105,6 +200,7 @@ export default function HomeScreen() {
         isOpen={isCalendarOpen}
         onClose={() => setCalendarOpen(false)}
         onSelectDate={handleCalendarDatePress}
+        disablePhases={isWaitingForNextPeriod}
       />
     </SafeAreaView>
   );
@@ -153,6 +249,23 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
+    color: colors.text.secondary,
+  },
+  waitingCard: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 6,
+  },
+  waitingTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.text.primary,
+  },
+  waitingSubtitle: {
+    fontSize: 14,
     color: colors.text.secondary,
   },
 });

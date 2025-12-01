@@ -17,11 +17,13 @@ import { getPhaseDayBackground } from "./phaseStyles";
 interface WeekCalendarProps {
   currentDate: Date;
   onDayPress?: (date: Date) => void;
+  disablePhaseColors?: boolean;
 }
 
 const WeekCalendarComponent = ({
   currentDate,
   onDayPress,
+  disablePhaseColors = false,
 }: WeekCalendarProps) => {
   const dailyLogs = useCycleStore((state) => state.dailyLogs);
   const cycles = useCycleStore((state) => state.cycles);
@@ -48,7 +50,9 @@ const WeekCalendarComponent = ({
         const log = logsByDate[dateStr];
         const moodEmoji = log?.mood ? MOOD_EMOJIS[log.mood] : undefined;
 
-        const phaseBackground = user
+        const phaseBackground = disablePhaseColors
+          ? styles.dayCircleDefault.backgroundColor
+          : user
           ? (() => {
               const status = calculateCycleStatus(user, cycles, day);
               if (!status) return styles.dayCircleDefault.backgroundColor;

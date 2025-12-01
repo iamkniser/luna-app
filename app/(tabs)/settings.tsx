@@ -17,6 +17,12 @@ export default function SettingsScreen() {
   const updateUser = useUserStore((state) => state.updateUser);
   const clearUser = useUserStore((state) => state.clearUser);
   const router = useRouter();
+  const setWaitingForNextPeriod = useCycleStore(
+    (state) => state.setWaitingForNextPeriod
+  );
+  const setRecoverySuppressedForStartDate = useCycleStore(
+    (state) => state.setRecoverySuppressedForStartDate
+  );
 
   const [name, setName] = useState(user?.name || "");
   const [cycleLength, setCycleLength] = useState(
@@ -68,11 +74,19 @@ export default function SettingsScreen() {
   const handleSave = () => {
     if (!validate()) return;
 
+    const nextLastPeriodISO = lastPeriodDate.toISOString();
+    const lastPeriodChanged = user.lastPeriodDate !== nextLastPeriodISO;
+
     updateUser({
       name: name.trim() || "Пользователь",
       averageCycleLength: parseInt(cycleLength, 10),
-      lastPeriodDate: lastPeriodDate.toISOString(),
+      lastPeriodDate: nextLastPeriodISO,
     });
+
+    if (lastPeriodChanged) {
+      setWaitingForNextPeriod(false);
+      setRecoverySuppressedForStartDate(null);
+    }
 
     Alert.alert("Готово", "Параметры сохранены");
   };

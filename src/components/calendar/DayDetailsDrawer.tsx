@@ -33,6 +33,15 @@ export const DayDetailsDrawer: React.FC<DayDetailsDrawerProps> = ({
   const cycles = useCycleStore((state) => state.cycles);
   const updateDailyLog = useCycleStore((state) => state.updateDailyLog);
   const getDailyLog = useCycleStore((state) => state.getDailyLog);
+  const setWaitingForNextPeriod = useCycleStore(
+    (state) => state.setWaitingForNextPeriod
+  );
+  const setRecoverySuppressedForStartDate = useCycleStore(
+    (state) => state.setRecoverySuppressedForStartDate
+  );
+  const isWaitingForNextPeriod = useCycleStore(
+    (state) => state.isWaitingForNextPeriod
+  );
 
   const [mood, setMood] = useState<DailyLog["mood"]>();
   const [notes, setNotes] = useState("");
@@ -100,11 +109,11 @@ export const DayDetailsDrawer: React.FC<DayDetailsDrawerProps> = ({
   }, [selectedDate]);
 
   const cycleDay = useMemo(() => {
-    if (!selectedDate || !user) return null;
+    if (!selectedDate || !user || isWaitingForNextPeriod) return null;
 
     const status = calculateCycleStatus(user, cycles, selectedDate);
     return status?.currentDay ?? null;
-  }, [cycles, selectedDate, user]);
+  }, [cycles, isWaitingForNextPeriod, selectedDate, user]);
 
   const handleSave = useCallback(() => {
     if (!selectedDate) return;
@@ -116,8 +125,22 @@ export const DayDetailsDrawer: React.FC<DayDetailsDrawerProps> = ({
       isPeriodDay,
     });
 
+    if (isPeriodDay) {
+      setWaitingForNextPeriod(false);
+      setRecoverySuppressedForStartDate(null);
+    }
+
     onClose();
-  }, [isPeriodDay, mood, notes, onClose, selectedDate, updateDailyLog]);
+  }, [
+    isPeriodDay,
+    mood,
+    notes,
+    onClose,
+    selectedDate,
+    updateDailyLog,
+    setWaitingForNextPeriod,
+    setRecoverySuppressedForStartDate,
+  ]);
 
   const handleClose = useCallback(() => {
     previousDateRef.current = null;
