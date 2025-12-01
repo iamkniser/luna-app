@@ -51,7 +51,7 @@ const CycleParametersSectionComponent = ({
               />
             );
           })()}
-        {cycleStatus &&
+        {/* {cycleStatus &&
           (() => {
             const daysLeft = getDaysUntilPhaseEnd(cycleStatus, user);
             if (daysLeft === null) return null;
@@ -61,7 +61,7 @@ const CycleParametersSectionComponent = ({
                 value={`${daysLeft} дней`}
               />
             );
-          })()}
+          })()} */}
       </View>
     </View>
   );
