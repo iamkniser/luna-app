@@ -95,6 +95,7 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
   }, []);
 
   const [selectedDate, setSelectedDate] = useState(initialDate);
+  const calendarRef = useRef<any>(null);
 
   // Отдельно считаем фазовые периоды (дорогая операция, зависит только от профиля и циклов)
   const phaseMarkedDates = useMemo(() => {
@@ -293,10 +294,11 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
         )}
 
         {/* Calendar */}
-        <View style={{ flex: 1 }}>
+        <View style={styles.calendarContainer}>
           <CalendarList
+            ref={calendarRef}
             style={{ height: "100%" }}
-            contentContainerStyle={{ paddingBottom: 40 }}
+            contentContainerStyle={{ paddingBottom: 120 }}
             current={initialDate}
             pastScrollRange={24}
             futureScrollRange={24}
@@ -318,6 +320,35 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
             removeClippedSubviews={false}
             nestedScrollEnabled={true}
           />
+          <View style={styles.bottomActions}>
+            <Pressable
+              style={[styles.actionButton, styles.actionButtonSecondary]}
+              onPress={() => {
+                setSelectedDate(initialDate);
+                // @ts-ignore: scrollToDay is available at runtime
+                calendarRef.current?.scrollToDay?.(
+                  initialDate,
+                  undefined,
+                  true
+                );
+              }}
+            >
+              <Ionicons
+                name="calendar-outline"
+                size={20}
+                color={colors.text.primary}
+              />
+            </Pressable>
+
+            <Pressable
+              style={[styles.actionButton, styles.actionButtonPrimary]}
+              onPress={() => {
+                // TODO: реализовать экран/режим редактирования дней цикла
+              }}
+            >
+              <Ionicons name="create-outline" size={20} color={colors.white} />
+            </Pressable>
+          </View>
         </View>
       </View>
     </BottomSheetModal>
@@ -332,6 +363,10 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  calendarContainer: {
+    flex: 1,
+    position: "relative",
   },
   headerRow: {
     flexDirection: "row",
@@ -361,6 +396,34 @@ const styles = StyleSheet.create({
   legendLabel: {
     fontSize: 13,
     color: colors.text.secondary,
+  },
+  bottomActions: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    bottom: 24,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+  },
+  actionButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  actionButtonSecondary: {
+    backgroundColor: "#F3F4F6",
+  },
+  actionButtonPrimary: {
+    backgroundColor: colors.primary,
   },
   closeButton: {
     width: 40,
