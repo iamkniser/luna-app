@@ -2,10 +2,7 @@ import { memo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { colors } from "@/src/constants/colors";
-import {
-  getDaysUntilPhaseEnd,
-  getExpectedOvulationDate,
-} from "@/src/services/cycleCalculations";
+import { getExpectedOvulationDate } from "@/src/services/cycleCalculations";
 import type { CycleStatus } from "@/src/types/cycle";
 import type { User } from "@/src/types/user";
 import { formatDateShort } from "@/src/utils/dateHelpers";
@@ -20,37 +17,49 @@ const CycleParametersSectionComponent = ({
   user,
   cycleStatus,
 }: CycleParametersSectionProps) => {
+  const parameters: { label: string; value: string }[] = [];
+
+  parameters.push({
+    label: "Средняя длина",
+    value: `${user.averageCycleLength} дней`,
+  });
+
+  if (user.lastPeriodDate) {
+    parameters.push({
+      label: "Начало последней менструации",
+      value: formatDateShort(user.lastPeriodDate),
+    });
+  }
+
+  if (cycleStatus?.daysUntilNextPeriod !== undefined) {
+    parameters.push({
+      label: "До следующей менструации",
+      value: `${cycleStatus.daysUntilNextPeriod} дней`,
+    });
+  }
+
+  if (user.lastPeriodDate) {
+    const ovulationDate = getExpectedOvulationDate(user);
+    if (ovulationDate) {
+      parameters.push({
+        label: "Ожидаемая овуляция",
+        value: formatDateShort(ovulationDate),
+      });
+    }
+  }
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Параметры цикла</Text>
       <View style={styles.parametersContainer}>
-        <CycleParameter
-          label="Средняя длина"
-          value={`${user.averageCycleLength} дней`}
-        />
-        {user.lastPeriodDate && (
+        {parameters.map((parameter, index) => (
           <CycleParameter
-            label="Начало последней менструации"
-            value={formatDateShort(user.lastPeriodDate)}
+            key={parameter.label}
+            label={parameter.label}
+            value={parameter.value}
+            isLast={index === parameters.length - 1}
           />
-        )}
-        {cycleStatus?.daysUntilNextPeriod !== undefined && (
-          <CycleParameter
-            label="До следующей менструации"
-            value={`${cycleStatus.daysUntilNextPeriod} дней`}
-          />
-        )}
-        {user.lastPeriodDate &&
-          (() => {
-            const ovulationDate = getExpectedOvulationDate(user);
-            if (!ovulationDate) return null;
-            return (
-              <CycleParameter
-                label="Ожидаемая овуляция"
-                value={formatDateShort(ovulationDate)}
-              />
-            );
-          })()}
+        ))}
         {/* {cycleStatus &&
           (() => {
             const daysLeft = getDaysUntilPhaseEnd(cycleStatus, user);
