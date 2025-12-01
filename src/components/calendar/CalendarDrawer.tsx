@@ -9,8 +9,14 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { CalendarList, DateObject, LocaleConfig } from "react-native-calendars";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { getPhaseDayBackground } from "@/src/components/home/phaseStyles";
 import { colors } from "@/src/constants/colors";
+import {
+  calculateCycleStatus,
+  getPredictedNextPeriodDate,
+} from "@/src/services/cycleCalculations";
 import { useCycleStore } from "@/src/store/cycleStore";
+import { useUserStore } from "@/src/store/userStore";
 import { DailyLog } from "@/src/types/cycle";
 
 // ---- Русская локаль ----
@@ -74,6 +80,8 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
   const sheetRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
   const dailyLogs = useCycleStore((state) => state.dailyLogs);
+  const cycles = useCycleStore((state) => state.cycles);
+  const user = useUserStore((state) => state.user);
 
   const snapPoints = useMemo(() => ["100%"], []);
 
@@ -86,10 +94,92 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
 
   const [selectedDate, setSelectedDate] = useState(initialDate);
 
-  const markedDates = useMemo(() => {
+  // Отдельно считаем фазовые периоды (дорогая операция, зависит только от профиля и циклов)
+  const phaseMarkedDates = useMemo(() => {
     const result: Record<string, any> = {};
 
-    // точки для дней, где есть любые данные
+    if (!user || !user.lastPeriodDate) return result;
+
+    const menstruationDates: string[] = [];
+    const ovulationDates: string[] = [];
+
+    const start = new Date(CALENDAR_START);
+    const end = new Date(CALENDAR_END);
+    const lastPeriodStart = new Date(user.lastPeriodDate);
+    const nextPeriodDate = getPredictedNextPeriodDate(user);
+
+    for (
+      let d = new Date(start.getTime());
+      d <= end;
+      d.setDate(d.getDate() + 1)
+    ) {
+      const current = new Date(d.getTime());
+
+      // Ограничиваем расчёты только текущим циклом:
+      // от фактической даты последней менструации до следующей ожидаемой
+      if (current < lastPeriodStart || current >= nextPeriodDate) {
+        continue;
+      }
+      const iso = current.toISOString().slice(0, 10);
+
+      const status = calculateCycleStatus(user, cycles, current);
+      if (!status) continue;
+
+      if (status.isPeriodActive) menstruationDates.push(iso);
+      if (status.phase === "ovulation") ovulationDates.push(iso);
+    }
+
+    const applyBlocks = (dates: string[], color: string, textColor: string) => {
+      if (!dates.length) return;
+      const blocks = groupConsecutiveDates(dates);
+
+      blocks.forEach((block) => {
+        if (block.length === 1) {
+          const d0 = block[0];
+          result[d0] = {
+            ...(result[d0] || {}),
+            startingDay: true,
+            endingDay: true,
+            color,
+            textColor,
+          };
+          return;
+        }
+
+        block.forEach((date, index) => {
+          const isFirst = index === 0;
+          const isLast = index === block.length - 1;
+
+          result[date] = {
+            ...(result[date] || {}),
+            ...(isFirst ? { startingDay: true } : {}),
+            ...(isLast ? { endingDay: true } : {}),
+            color,
+            textColor,
+          };
+        });
+      });
+    };
+
+    applyBlocks(
+      menstruationDates,
+      getPhaseDayBackground("menstruation"),
+      colors.text.primary
+    );
+    applyBlocks(
+      ovulationDates,
+      getPhaseDayBackground("ovulation"),
+      colors.text.primary
+    );
+
+    return result;
+  }, [user, cycles]);
+
+  const markedDates = useMemo(() => {
+    // начинаем с фазовых подсветок
+    const result: Record<string, any> = { ...phaseMarkedDates };
+
+    // точки для дней с данными
     dailyLogs.forEach((log: DailyLog) => {
       const hasData =
         log.mood ||
@@ -108,21 +198,33 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
 
     // выделение выбранной даты
     if (selectedDate) {
+      const existing = result[selectedDate] || {};
       result[selectedDate] = {
-        ...(result[selectedDate] || {}),
-        selected: true,
-        selectedColor: colors.primary,
-        selectedTextColor: colors.white,
+        ...existing,
+        // сохраняем startingDay / endingDay, если дата внутри периода,
+        // но перекрашиваем её как выбранную
+        color: colors.primary,
+        textColor: colors.white,
       };
     }
 
     return result;
-  }, [dailyLogs, selectedDate]);
+  }, [dailyLogs, selectedDate, phaseMarkedDates]);
+
+  const hasPeriodMarks = useMemo(
+    () => Object.keys(phaseMarkedDates).length > 0,
+    [phaseMarkedDates]
+  );
 
   useEffect(() => {
-    if (isOpen) sheetRef.current?.present();
-    else sheetRef.current?.dismiss();
-  }, [isOpen]);
+    if (isOpen) {
+      // при каждом открытии подсвечиваем текущую (или ближайшую допустимую) дату
+      setSelectedDate(initialDate);
+      sheetRef.current?.present();
+    } else {
+      sheetRef.current?.dismiss();
+    }
+  }, [isOpen, initialDate]);
 
   const renderBackdrop = (props: BottomSheetBackdropProps) => (
     <BottomSheetBackdrop
@@ -176,6 +278,7 @@ export const CalendarDrawer: React.FC<CalendarDrawerProps> = ({
               onSelectDate(new Date(day.dateString));
             }}
             markedDates={markedDates}
+            markingType={hasPeriodMarks ? "period" : undefined}
             firstDay={1}
             theme={calendarTheme}
             horizontal={false}
@@ -241,4 +344,41 @@ const calendarTheme = {
   textDayFontWeight: "600",
   textDayHeaderFontWeight: "600",
   textDisabledColor: "#d9e1e8",
+};
+
+// ---- Вспомогательные утилиты для группировки дат фаз ----
+const groupConsecutiveDates = (dates: string[]): string[][] => {
+  if (!dates.length) return [];
+  const sorted = [...dates].sort();
+  const blocks: string[][] = [];
+  let currentBlock: string[] = [];
+
+  sorted.forEach((date) => {
+    if (!currentBlock.length) {
+      currentBlock.push(date);
+      return;
+    }
+
+    const prev = currentBlock[currentBlock.length - 1];
+    if (areConsecutiveDates(prev, date)) {
+      currentBlock.push(date);
+    } else {
+      blocks.push(currentBlock);
+      currentBlock = [date];
+    }
+  });
+
+  if (currentBlock.length) {
+    blocks.push(currentBlock);
+  }
+
+  return blocks;
+};
+
+const areConsecutiveDates = (prev: string, current: string): boolean => {
+  const prevDate = new Date(prev);
+  const currentDate = new Date(current);
+  const diffMs = currentDate.getTime() - prevDate.getTime();
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  return Math.round(diffMs / oneDayMs) === 1;
 };
